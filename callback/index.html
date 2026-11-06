@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tesla OAuth callback</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 42rem; margin: 2.5rem auto; padding: 0 1rem; line-height: 1.45; color: #111; }
+    .ok { color: #0a7a32; } .err { color: #b00020; }
+    .box { background: #f6f8fa; border: 1px solid #d0d7de; border-radius: 8px; padding: 1rem; word-break: break-all; font-family: ui-monospace, monospace; font-size: 0.9rem; }
+    button { margin-top: 0.75rem; padding: 0.5rem 0.9rem; border-radius: 6px; border: 1px solid #d0d7de; background: #fff; cursor: pointer; }
+    button:hover { background: #f3f4f6; }
+    dt { font-weight: 600; margin-top: 0.75rem; }
+    dd { margin: 0.25rem 0 0; }
+  </style>
+</head>
+<body>
+  <h1>Tesla authorization callback</h1>
+  <p id="status">Reading query parameters…</p>
+  <dl id="fields"></dl>
+  <div id="codeWrap" hidden>
+    <p><strong>Authorization code</strong> (copy this for <code>exchange-code</code>):</p>
+    <div class="box" id="codeBox"></div>
+    <button type="button" id="copyBtn">Copy code</button>
+  </div>
+  <script>
+    (function () {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get("code");
+      const state = params.get("state");
+      const error = params.get("error");
+      const errorDesc = params.get("error_description");
+      const status = document.getElementById("status");
+      const fields = document.getElementById("fields");
+      function add(k, v) {
+        if (v == null || v === "") return;
+        const dt = document.createElement("dt"); dt.textContent = k;
+        const dd = document.createElement("dd"); dd.textContent = v;
+        fields.appendChild(dt); fields.appendChild(dd);
+      }
+      if (error) {
+        status.className = "err";
+        status.textContent = "Authorization failed: " + error;
+        add("error_description", errorDesc);
+        return;
+      }
+      if (!code) {
+        status.className = "err";
+        status.textContent = "No code parameter found. Complete Tesla login so this page receives ?code=…";
+        return;
+      }
+      status.className = "ok";
+      status.textContent = "Authorization code received. You can close this tab after copying.";
+      add("state", state);
+      document.getElementById("codeWrap").hidden = false;
+      document.getElementById("codeBox").textContent = code;
+      document.getElementById("copyBtn").onclick = async function () {
+        try {
+          await navigator.clipboard.writeText(code);
+          this.textContent = "Copied";
+        } catch (e) {
+          this.textContent = "Select and copy manually";
+        }
+      };
+    })();
+  </script>
+</body>
+</html>
